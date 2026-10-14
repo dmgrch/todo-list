@@ -317,6 +317,79 @@ input {
 
 .task-item__actions {
     flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.task-item__edit,
+.task-item__save,
+.task-item__cancel {
+    padding: 8px 12px;
+
+    border: 0;
+    border-radius: 18px;
+
+    background-color: transparent;
+
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.task-item__edit {
+    color: #5f6368;
+}
+
+.task-item__edit:hover {
+    background-color: #f1f3f4;
+}
+
+.task-item__save {
+    color: #188038;
+}
+
+.task-item__save:hover {
+    background-color: #e6f4ea;
+}
+
+.task-item__cancel {
+    color: #5f6368;
+}
+
+.task-item__cancel:hover {
+    background-color: #f1f3f4;
+}
+
+.task-item__edit-input {
+    width: 100%;
+
+    padding: 8px 10px;
+
+    border: 1px solid #dadce0;
+    border-radius: 6px;
+
+    background-color: #ffffff;
+    color: #202124;
+
+    outline: none;
+
+    font: inherit;
+
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.task-item__edit-input + .task-item__edit-input {
+    margin-top: 8px;
+}
+
+.task-item__edit-input:focus {
+    border-color: #1a73e8;
+
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.12);
 }
 
 .task-item__delete {
@@ -422,6 +495,24 @@ input {
     .task-item {
         align-items: flex-start;
         gap: 10px;
+    }
+
+    .task-item {
+        flex-direction: column;
+    }
+
+    .task-item__main {
+        width: 100%;
+    }
+
+    .task-item__content {
+        flex: 1;
+    }
+
+    .task-item__actions {
+        width: 100%;
+
+        justify-content: flex-end;
     }
 
     .task-item__delete {

@@ -12,6 +12,7 @@ styleLink.href = "css/style.css";
 document.head.append(viewport, styleLink);
 
 let tasks = [];
+let editingTaskId = null;
 
 const header = document.createElement("header");
 header.className = "header";
@@ -186,38 +187,84 @@ function createTaskElement(task) {
     const taskContent = document.createElement("div");
     taskContent.className = "task-item__content";
 
-    const taskTitle = document.createElement("p");
-    taskTitle.className = "task-item__title";
-    taskTitle.textContent = task.title;
-
-    const taskDate = document.createElement("time");
-    taskDate.className = "task-item__date";
-    taskDate.dateTime = task.date;
-    taskDate.textContent = formatDate(task.date);
-
-    taskContent.append(taskTitle, taskDate);
-
-    taskMain.append(checkbox, taskContent);
-
     const actions = document.createElement("div");
     actions.className = "task-item__actions";
 
-    const deleteButton = document.createElement("button");
-    deleteButton.className = "task-item__delete";
-    deleteButton.type = "button";
-    deleteButton.textContent = "Удалить";
+    if (editingTaskId === task.id) {
+        const editTitleInput = document.createElement("input");
+        editTitleInput.className = "task-item__edit-input";
+        editTitleInput.type = "text";
+        editTitleInput.value = task.title;
 
-    actions.append(deleteButton);
+        const editDateInput = document.createElement("input");
+        editDateInput.className = "task-item__edit-input";
+        editDateInput.type = "date";
+        editDateInput.value = task.date;
 
+        taskContent.append(editTitleInput, editDateInput);
+
+        const saveButton = document.createElement("button");
+        saveButton.className = "task-item__save";
+        saveButton.type = "button";
+        saveButton.textContent = "Сохранить";
+
+        const cancelButton = document.createElement("button");
+        cancelButton.className = "task-item__cancel";
+        cancelButton.type = "button";
+        cancelButton.textContent = "Отмена";
+
+        actions.append(saveButton, cancelButton);
+
+        saveButton.addEventListener("click", () => {
+            saveTaskChanges(
+                task.id,
+                editTitleInput.value,
+                editDateInput.value
+            );
+        });
+
+        cancelButton.addEventListener("click", cancelEditing);
+    } else {
+        const taskTitle = document.createElement("p");
+        taskTitle.className = "task-item__title";
+        taskTitle.textContent = task.title;
+
+        const taskDate = document.createElement("time");
+        taskDate.className = "task-item__date";
+        taskDate.dateTime = task.date;
+        taskDate.textContent = formatDate(task.date);
+
+        taskContent.append(taskTitle, taskDate);
+
+        const editButton = document.createElement("button");
+        editButton.className = "task-item__edit";
+        editButton.type = "button";
+        editButton.textContent = "Изменить";
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "task-item__delete";
+        deleteButton.type = "button";
+        deleteButton.textContent = "Удалить";
+
+        actions.append(editButton, deleteButton);
+
+        checkbox.addEventListener("change", () => {
+            toggleTask(task.id);
+        });
+
+        editButton.addEventListener("click", () => {
+            startEditing(task.id);
+        });
+
+        deleteButton.addEventListener("click", () => {
+            deleteTask(task.id);
+        });
+    }
+
+    checkbox.disabled = editingTaskId === task.id;
+
+    taskMain.append(checkbox, taskContent);
     taskItem.append(taskMain, actions);
-
-    checkbox.addEventListener("change", () => {
-        toggleTask(task.id);
-    });
-
-    deleteButton.addEventListener("click", () => {
-        deleteTask(task.id);
-    });
 
     return taskItem;
 }
@@ -266,6 +313,39 @@ function toggleTask(id) {
     }
 
     task.completed = !task.completed;
+
+    renderTasks();
+}
+
+function startEditing(id) {
+    editingTaskId = id;
+
+    renderTasks();
+}
+
+function saveTaskChanges(id, newTitle, newDate) {
+    const task = tasks.find((task) => task.id === id);
+
+    if (!task) {
+        return;
+    }
+
+    const title = newTitle.trim();
+
+    if (!title || !newDate) {
+        return;
+    }
+
+    task.title = title;
+    task.date = newDate;
+
+    editingTaskId = null;
+
+    renderTasks();
+}
+
+function cancelEditing() {
+    editingTaskId = null;
 
     renderTasks();
 }
