@@ -11,7 +11,7 @@ styleLink.href = "css/style.css";
 
 document.head.append(viewport, styleLink);
 
-let tasks = [];
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let editingTaskId = null;
 let currentFilter = "all";
 let searchText = "";
@@ -169,6 +169,10 @@ document.body.append(header, main, footer);
 
 function formatDate(date) {
     return new Date(date + "T00:00:00").toLocaleDateString("ru-RU");
+}
+
+function saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
 function createTaskElement(task) {
@@ -341,12 +345,14 @@ function addTask(title, date) {
 
     tasks.push(task);
 
+    saveTasks();
     renderTasks();
 }
 
 function deleteTask(id) {
     tasks = tasks.filter((task) => task.id !== id);
 
+    saveTasks();
     renderTasks();
 }
 
@@ -359,6 +365,7 @@ function toggleTask(id) {
 
     task.completed = !task.completed;
 
+    saveTasks();
     renderTasks();
 }
 
@@ -383,6 +390,8 @@ function saveTaskChanges(id, newTitle, newDate) {
 
     task.title = title;
     task.date = newDate;
+
+    saveTasks();
 
     editingTaskId = null;
 
