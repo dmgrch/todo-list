@@ -13,6 +13,9 @@ document.head.append(viewport, styleLink);
 
 let tasks = [];
 let editingTaskId = null;
+let currentFilter = "all";
+let searchText = "";
+let sortDirection = "asc";
 
 const header = document.createElement("header");
 header.className = "header";
@@ -269,17 +272,59 @@ function createTaskElement(task) {
     return taskItem;
 }
 
+function getVisibleTasks() {
+    let visibleTasks = [...tasks];
+
+    if (currentFilter === "active") {
+        visibleTasks = visibleTasks.filter((task) => !task.completed);
+    }
+
+    if (currentFilter === "completed") {
+        visibleTasks = visibleTasks.filter((task) => task.completed);
+    }
+
+    if (searchText) {
+        visibleTasks = visibleTasks.filter((task) => {
+            return task.title
+                .toLowerCase()
+                .includes(searchText.toLowerCase());
+        });
+    }
+
+    visibleTasks.sort((firstTask, secondTask) => {
+        const firstDate = new Date(firstTask.date);
+        const secondDate = new Date(secondTask.date);
+
+        if (sortDirection === "asc") {
+            return firstDate - secondDate;
+        }
+
+        return secondDate - firstDate;
+    });
+
+    return visibleTasks;
+}
+
 function renderTasks() {
     taskList.innerHTML = "";
 
+    const visibleTasks = getVisibleTasks();
+
     if (tasks.length === 0) {
+        emptyMessage.textContent = "Задач пока нет";
+        emptyMessage.style.display = "block";
+        return;
+    }
+
+    if (visibleTasks.length === 0) {
+        emptyMessage.textContent = "Ничего не найдено";
         emptyMessage.style.display = "block";
         return;
     }
 
     emptyMessage.style.display = "none";
 
-    tasks.forEach((task) => {
+    visibleTasks.forEach((task) => {
         const taskElement = createTaskElement(task);
 
         taskList.append(taskElement);
@@ -364,6 +409,48 @@ taskForm.addEventListener("submit", (event) => {
 
     taskForm.reset();
     titleInput.focus();
+});
+
+const filterButtons = [
+    allButton,
+    activeButton,
+    completedButton
+];
+
+filterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+        currentFilter = button.dataset.filter;
+        editingTaskId = null;
+
+        filterButtons.forEach((filterButton) => {
+            filterButton.classList.remove("filters__button--active");
+        });
+
+        button.classList.add("filters__button--active");
+
+        renderTasks();
+    });
+});
+
+searchInput.addEventListener("input", () => {
+    searchText = searchInput.value.trim();
+    editingTaskId = null;
+
+    renderTasks();
+});
+
+sortButton.addEventListener("click", () => {
+    editingTaskId = null;
+
+    if (sortDirection === "asc") {
+        sortDirection = "desc";
+        sortButton.textContent = "По дате ↓";
+    } else {
+        sortDirection = "asc";
+        sortButton.textContent = "По дате ↑";
+    }
+
+    renderTasks();
 });
 
 renderTasks();

@@ -233,6 +233,11 @@ input {
     background-color: #f1f3f4;
 }
 
+.sort-button:active,
+.filters__button:active {
+    transform: scale(0.97);
+}
+
 .filters__button--active {
     border-color: #d2e3fc;
 
