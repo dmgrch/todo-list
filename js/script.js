@@ -11,6 +11,8 @@ styleLink.href = "css/style.css";
 
 document.head.append(viewport, styleLink);
 
+let tasks = [];
+
 const header = document.createElement("header");
 header.className = "header";
 
@@ -160,3 +162,128 @@ footerContainer.append(footerText);
 footer.append(footerContainer);
 
 document.body.append(header, main, footer);
+
+function formatDate(date) {
+    return new Date(date + "T00:00:00").toLocaleDateString("ru-RU");
+}
+
+function createTaskElement(task) {
+    const taskItem = document.createElement("li");
+    taskItem.className = "task-item";
+
+    if (task.completed) {
+        taskItem.classList.add("task-item--completed");
+    }
+
+    const taskMain = document.createElement("div");
+    taskMain.className = "task-item__main";
+
+    const checkbox = document.createElement("input");
+    checkbox.className = "task-item__checkbox";
+    checkbox.type = "checkbox";
+    checkbox.checked = task.completed;
+
+    const taskContent = document.createElement("div");
+    taskContent.className = "task-item__content";
+
+    const taskTitle = document.createElement("p");
+    taskTitle.className = "task-item__title";
+    taskTitle.textContent = task.title;
+
+    const taskDate = document.createElement("time");
+    taskDate.className = "task-item__date";
+    taskDate.dateTime = task.date;
+    taskDate.textContent = formatDate(task.date);
+
+    taskContent.append(taskTitle, taskDate);
+
+    taskMain.append(checkbox, taskContent);
+
+    const actions = document.createElement("div");
+    actions.className = "task-item__actions";
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "task-item__delete";
+    deleteButton.type = "button";
+    deleteButton.textContent = "Удалить";
+
+    actions.append(deleteButton);
+
+    taskItem.append(taskMain, actions);
+
+    checkbox.addEventListener("change", () => {
+        toggleTask(task.id);
+    });
+
+    deleteButton.addEventListener("click", () => {
+        deleteTask(task.id);
+    });
+
+    return taskItem;
+}
+
+function renderTasks() {
+    taskList.innerHTML = "";
+
+    if (tasks.length === 0) {
+        emptyMessage.style.display = "block";
+        return;
+    }
+
+    emptyMessage.style.display = "none";
+
+    tasks.forEach((task) => {
+        const taskElement = createTaskElement(task);
+
+        taskList.append(taskElement);
+    });
+}
+
+function addTask(title, date) {
+    const task = {
+        id: Date.now(),
+        title: title,
+        date: date,
+        completed: false
+    };
+
+    tasks.push(task);
+
+    renderTasks();
+}
+
+function deleteTask(id) {
+    tasks = tasks.filter((task) => task.id !== id);
+
+    renderTasks();
+}
+
+function toggleTask(id) {
+    const task = tasks.find((task) => task.id === id);
+
+    if (!task) {
+        return;
+    }
+
+    task.completed = !task.completed;
+
+    renderTasks();
+}
+
+taskForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const title = titleInput.value.trim();
+    const date = dateInput.value;
+
+    if (!title || !date) {
+        return;
+    }
+
+    addTask(title, date);
+
+    taskForm.reset();
+    titleInput.focus();
+});
+
+renderTasks();

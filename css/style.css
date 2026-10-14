@@ -260,6 +260,96 @@ input {
     font-size: 16px;
 }
 
+.task-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding: 18px 0;
+
+    border-bottom: 1px solid #e8eaed;
+}
+
+.task-item:first-child {
+    border-top: 1px solid #e8eaed;
+}
+
+.task-item__main {
+    min-width: 0;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.task-item__checkbox {
+    width: 20px;
+    height: 20px;
+
+    margin-top: 2px;
+
+    accent-color: #1a73e8;
+
+    cursor: pointer;
+}
+
+.task-item__content {
+    min-width: 0;
+}
+
+.task-item__title {
+    margin: 0 0 5px;
+
+    font-size: 16px;
+    font-weight: 500;
+
+    overflow-wrap: anywhere;
+
+    transition: color 0.3s ease;
+}
+
+.task-item__date {
+    color: #80868b;
+
+    font-size: 13px;
+}
+
+.task-item__actions {
+    flex-shrink: 0;
+}
+
+.task-item__delete {
+    padding: 8px 12px;
+
+    border: 0;
+    border-radius: 18px;
+
+    background-color: transparent;
+    color: #5f6368;
+
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.task-item__delete:hover {
+    background-color: #fce8e6;
+    color: #d93025;
+}
+
+.task-item--completed .task-item__title {
+    color: #80868b;
+
+    text-decoration: line-through;
+}
+
+.task-item--completed .task-item__date {
+    color: #bdc1c6;
+}
+
 .footer {
     padding: 24px 0;
 
@@ -327,6 +417,17 @@ input {
 
     .task-form__button {
         grid-column: auto;
+    }
+
+    .task-item {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .task-item__delete {
+        padding: 6px 8px;
+
+        font-size: 13px;
     }
 
     .filters {
