@@ -15,7 +15,8 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let editingTaskId = null;
 let currentFilter = "all";
 let searchText = "";
-let sortDirection = "asc";
+let sortMode = "manual";
+let draggedTaskId = null;
 
 const header = document.createElement("header");
 header.className = "header";
@@ -128,8 +129,8 @@ filters.append(allButton, activeButton, completedButton);
 const sortButton = document.createElement("button");
 sortButton.className = "sort-button";
 sortButton.type = "button";
-sortButton.dataset.sort = "asc";
-sortButton.textContent = "По дате ↑";
+sortButton.dataset.sort = "manual";
+sortButton.textContent = "Ручной порядок";
 
 controls.append(filters, sortButton);
 
@@ -178,6 +179,7 @@ function saveTasks() {
 function createTaskElement(task) {
     const taskItem = document.createElement("li");
     taskItem.className = "task-item";
+    taskItem.dataset.id = task.id;
 
     if (task.completed) {
         taskItem.classList.add("task-item--completed");
@@ -185,6 +187,15 @@ function createTaskElement(task) {
 
     const taskMain = document.createElement("div");
     taskMain.className = "task-item__main";
+    const dragHandle = document.createElement("span");
+    dragHandle.className = "task-item__drag-handle";
+    dragHandle.textContent = "⋮⋮";
+    dragHandle.dataset.id = task.id;
+    dragHandle.draggable = canDragTasks();
+
+    if (!dragHandle.draggable) {
+        dragHandle.classList.add("task-item__drag-handle--disabled");
+    }
 
     const checkbox = document.createElement("input");
     checkbox.className = "task-item__checkbox";
@@ -270,9 +281,14 @@ function createTaskElement(task) {
 
     checkbox.disabled = editingTaskId === task.id;
 
-    taskMain.append(checkbox, taskContent);
+    taskMain.append(dragHandle, checkbox, taskContent);
     taskItem.append(taskMain, actions);
 
+    dragHandle.addEventListener("dragstart", handleDragStart);
+    dragHandle.addEventListener("dragend", handleDragEnd);
+
+    taskItem.addEventListener("dragover", handleDragOver);
+    taskItem.addEventListener("drop", handleDrop);
     return taskItem;
 }
 
@@ -295,16 +311,17 @@ function getVisibleTasks() {
         });
     }
 
-    visibleTasks.sort((firstTask, secondTask) => {
-        const firstDate = new Date(firstTask.date);
-        const secondDate = new Date(secondTask.date);
+    if (sortMode === "asc") {
+        visibleTasks.sort((firstTask, secondTask) => {
+            return new Date(firstTask.date) - new Date(secondTask.date);
+        });
+    }
 
-        if (sortDirection === "asc") {
-            return firstDate - secondDate;
-        }
-
-        return secondDate - firstDate;
-    });
+    if (sortMode === "desc") {
+        visibleTasks.sort((firstTask, secondTask) => {
+            return new Date(secondTask.date) - new Date(firstTask.date);
+        });
+    }
 
     return visibleTasks;
 }
@@ -404,6 +421,96 @@ function cancelEditing() {
     renderTasks();
 }
 
+function canDragTasks() {
+    return (
+        currentFilter === "all" &&
+        searchText === "" &&
+        sortMode === "manual" &&
+        editingTaskId === null
+    );
+}
+
+function handleDragStart(event) {
+    if (!canDragTasks()) {
+        event.preventDefault();
+        return;
+    }
+
+    draggedTaskId = Number(event.currentTarget.dataset.id);
+
+    const taskItem = event.currentTarget.closest(".task-item");
+
+    taskItem.classList.add("task-item--dragging");
+
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(draggedTaskId));
+}
+
+function handleDragOver(event) {
+    if (!canDragTasks()) {
+        return;
+    }
+
+    event.preventDefault();
+
+    document.querySelectorAll(".task-item").forEach((taskItem) => {
+        taskItem.classList.remove("task-item--drag-over");
+    });
+
+    if (Number(event.currentTarget.dataset.id) !== draggedTaskId) {
+        event.currentTarget.classList.add("task-item--drag-over");
+    }
+
+    event.dataTransfer.dropEffect = "move";
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+
+    const targetTaskId = Number(event.currentTarget.dataset.id);
+
+    if (draggedTaskId === null || draggedTaskId === targetTaskId) {
+        return;
+    }
+
+    const draggedIndex = tasks.findIndex((task) => {
+        return task.id === draggedTaskId;
+    });
+
+    const draggedTask = tasks[draggedIndex];
+
+    tasks.splice(draggedIndex, 1);
+
+    const targetIndex = tasks.findIndex((task) => {
+        return task.id === targetTaskId;
+    });
+
+    const targetRect = event.currentTarget.getBoundingClientRect();
+    const targetMiddle = targetRect.top + targetRect.height / 2;
+
+    let insertIndex = targetIndex;
+
+    if (event.clientY > targetMiddle) {
+        insertIndex = targetIndex + 1;
+    }
+
+    tasks.splice(insertIndex, 0, draggedTask);
+
+    saveTasks();
+    renderTasks();
+}
+
+function handleDragEnd() {
+    draggedTaskId = null;
+
+    document.querySelectorAll(".task-item").forEach((taskItem) => {
+        taskItem.classList.remove(
+            "task-item--dragging",
+            "task-item--drag-over"
+        );
+    });
+}
+
 taskForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
@@ -451,12 +558,18 @@ searchInput.addEventListener("input", () => {
 sortButton.addEventListener("click", () => {
     editingTaskId = null;
 
-    if (sortDirection === "asc") {
-        sortDirection = "desc";
+    if (sortMode === "manual") {
+        sortMode = "asc";
+        sortButton.dataset.sort = "asc";
+        sortButton.textContent = "По дате ↑";
+    } else if (sortMode === "asc") {
+        sortMode = "desc";
+        sortButton.dataset.sort = "desc";
         sortButton.textContent = "По дате ↓";
     } else {
-        sortDirection = "asc";
-        sortButton.textContent = "По дате ↑";
+        sortMode = "manual";
+        sortButton.dataset.sort = "manual";
+        sortButton.textContent = "Ручной порядок";
     }
 
     renderTasks();
